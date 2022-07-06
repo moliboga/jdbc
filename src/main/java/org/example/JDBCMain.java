@@ -96,12 +96,19 @@ public class JDBCMain {
     public static void batchAddingNewStudents() throws SQLException {
         String sql = "INSERT INTO student (FirstName, LastName) VALUES(?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            conn.setAutoCommit(false);
             for (int i = 0; i < 10; i++){
                 ps.setString(1, String.valueOf(i));
                 ps.setString(2, "NumberedStudent");
                 ps.addBatch();
             }
-            ps.executeBatch();
+            int[] batchRes = ps.executeBatch();
+            if (batchRes.length == 10)
+                conn.commit();
+            else
+                throw new RuntimeException("Wrong batch size");
+        } catch (RuntimeException e){
+            conn.rollback();
         }
     }
 }
